@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "workeanly"
+version = "0.1.0"
+description = "Labour market intelligence and skills analytics project"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "polars>=1.44,<2.0",
+    "pyodbc>=5.2,<6.0",
+]
+
+[project.optional-dependencies]
+notebook = ["jupyter>=1.1,<2.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.unittest]
+start-directory = "tests"

@@ -2,631 +2,90 @@
 
 ### Labour Market Intelligence & Skills Analytics
 
-WORKEANLY is an end-to-end labour market analytics project designed to transform job-posting data into structured, reliable and actionable insights about hiring demand, skills, salaries, experience levels, employment types and geographic patterns.
+WORKEANLY is an end-to-end data analytics project that turns global job-posting data into reliable insights about hiring demand, skills, compensation, experience requirements, employment types, remote work, companies and geography.
 
-The project combines **Python and Polars** for data ingestion, exploration, cleaning, transformation and validation, **Microsoft SQL Server** for relational data modelling and analytical SQL, and **Power BI** for business intelligence and interactive data visualisation.
+The project is designed as a professional Data Analyst portfolio case study. It demonstrates a complete analytical workflow: raw-data ingestion, quality validation, transformation, relational modelling, SQL analysis and business intelligence reporting.
 
-> **Project status:** In development
+## Project status
 
----
+| Area | Status |
+| --- | --- |
+| Dataset definition | Ready |
+| Python and Polars pipeline | Implemented and tested locally |
+| Data-quality validation | Implemented and tested locally |
+| SQL Server data model | Implemented; awaiting a configured SQL Server instance |
+| Analytical SQL views | Implemented; awaiting database execution |
+| Power BI dashboard | Planned |
 
-## Overview
+## Business objective
 
-The labour market generates large amounts of job-posting data containing information about roles, companies, skills, locations, salaries and candidate requirements.
+Labour-market data is valuable only when it can answer useful questions. WORKEANLY focuses on the following areas:
 
-WORKEANLY explores this data from an analytical and business perspective, with the goal of answering questions such as:
+- Which job titles have the highest hiring demand?
+- Which companies publish the most opportunities?
+- Which countries and regions have the greatest job-posting volume?
+- Which skills are requested most often?
+- Which skills are associated with specific roles and experience levels?
+- How do salary ranges vary by role, location and seniority?
+- How common are remote opportunities?
+- What skills may represent potential market gaps?
 
-* Which job roles have the highest hiring demand?
-* Which technical skills are most frequently requested?
-* Which companies are hiring for specific roles?
-* How does skill demand vary across experience levels?
-* Which countries and regions have the highest job-posting volume?
-* How are salaries distributed across roles and experience levels?
-* What is the relationship between salary and experience level?
-* Which skills are associated with specific job roles?
-* How common are remote opportunities?
-* What patterns can be identified in the labour market?
+The objective is not only to calculate metrics. It is to produce a documented, reproducible analytical model that supports clear business interpretation.
 
-The project is structured as a complete analytical workflow rather than a collection of isolated notebooks.
+## Dataset
 
----
+WORKEANLY uses the **Job Market Intelligence 2024 – Skills Global Dataset**. The source data is organised into a fact table, four dimensions and one bridge table.
 
-## Objectives
+| Dataset | Grain | Purpose |
+| --- | --- | --- |
+| `fact_job_postings` | One row per job posting | Stores the core attributes of each advertised job. |
+| `dim_company` | One row per company | Provides company reference data. |
+| `dim_country` | One row per country | Provides country and region reference data. |
+| `dim_platform` | One row per job platform | Identifies the source platform of a posting. |
+| `dim_skill` | One row per skill | Provides the controlled skill list. |
+| `bridge_job_skills` | One row per job–skill pair | Resolves the many-to-many relationship between jobs and skills. |
 
-The main objectives of WORKEANLY are to:
-
-1. Build a reproducible data ingestion workflow.
-2. Understand and profile raw labour-market data.
-3. Identify data-quality issues before analysis.
-4. Clean and transform data using Python and Polars.
-5. Validate relationships between datasets.
-6. Model the data using a relational structure.
-7. Store and analyse structured data in Microsoft SQL Server.
-8. Answer business questions using analytical SQL.
-9. Prepare analytical datasets for Business Intelligence.
-10. Build Power BI dashboards to communicate the resulting insights.
-
----
-
-## Data Source
-
-The project uses the **Job Market Intelligence 2024 – Skills Global Dataset**.
-
-The dataset contains job-posting information and supporting dimension tables covering areas such as:
-
-* Job postings
-* Companies
-* Countries and regions
-* Platforms
-* Skills
-* Job-to-skill relationships
-
-The raw data is organised into fact, dimension and bridge datasets to support relational analysis.
-
-### Dataset tables
-
-| Table               | Purpose                                           |
-| ------------------- | ------------------------------------------------- |
-| `fact_job_postings` | Core job-posting information                      |
-| `dim_company`       | Company reference data                            |
-| `dim_country`       | Country and regional information                  |
-| `dim_platform`      | Job-platform information                          |
-| `dim_skill`         | Skill reference data                              |
-| `bridge_job_skills` | Many-to-many relationship between jobs and skills |
-
----
-
-## Data Model
-
-WORKEANLY uses a relational model based on **fact, dimension and bridge tables**.
-
-```text
-                         dim_company
-                              │
-                              │
-                              ▼
-dim_country ─────────► fact_job_postings ◄───────── dim_platform
-                              │
-                              │
-                              │
-                              ▼
-                       bridge_job_skills
-                              │
-                              │
-                              ▼
-                         dim_skill
-```
-
-### Fact table
-
-`fact_job_postings` represents individual job postings.
-
-Main attributes include:
-
-* `job_id`
-* `job_title`
-* `company`
-* `country`
-* `region`
-* `platform`
-* `experience_level`
-* `employment_type`
-* `salary_min_usd`
-* `salary_max_usd`
-* `remote_option`
-* `posting_date`
-* `applicants_estimate`
-
-### Dimension tables
-
-The dimension tables provide descriptive information used to analyse the fact data.
-
-#### `dim_company`
-
-Contains unique companies.
-
-```text
-company
-```
-
-#### `dim_country`
-
-Contains countries and their corresponding regions.
-
-```text
-country
-region
-```
-
-#### `dim_platform`
-
-Contains the platforms where job postings were published.
-
-```text
-platform
-```
-
-#### `dim_skill`
-
-Contains the available skills associated with job postings.
-
-```text
-skill
-```
-
-### Bridge table
-
-`bridge_job_skills` represents the many-to-many relationship between job postings and skills.
-
-```text
-job_id
-skill
-```
-
-A single job can require multiple skills, while the same skill can be required by many jobs.
-
-The logical composite key is:
-
-```text
-(job_id, skill)
-```
-
----
-
-## Analytical Workflow
-
-The project follows a structured data-analysis pipeline:
-
-```text
-Raw CSV Data
-     │
-     ▼
-Data Ingestion
-     │
-     ▼
-Data Profiling
-     │
-     ▼
-Data Quality Validation
-     │
-     ▼
-Cleaning & Transformation
-     │
-     ▼
-Exploratory Data Analysis
-     │
-     ▼
-Relational Data Model
-     │
-     ▼
-Microsoft SQL Server
-     │
-     ▼
-Analytical SQL
-     │
-     ▼
-Power BI
-     │
-     ▼
-Business Insights
-```
-
-Each stage has a specific responsibility and is kept separate to make the project easier to maintain, test and extend.
-
----
-
-# Technology Stack
-
-## Python
-
-Python is used as the main programming language for the data-processing layer.
-
-Responsibilities include:
-
-* Data ingestion
-* Data profiling
-* Data cleaning
-* Data transformation
-* Data validation
-* Exploratory analysis
-* Reusable analytical functions
-
-## Polars
-
-Polars is used as the primary DataFrame library.
-
-It is used for:
-
-* Reading CSV files
-* Inspecting schemas
-* Handling missing values
-* Grouping and aggregation
-* Joining datasets
-* Filtering
-* Transformation
-* Statistical calculations
-* Data validation
-
-The project intentionally uses Polars instead of relying on a large number of data-processing libraries.
-
-## Microsoft SQL Server
-
-Microsoft SQL Server is used as the relational database and analytical SQL layer.
-
-Responsibilities include:
-
-* Relational data storage
-* Table modelling
-* Primary and foreign keys
-* Referential integrity
-* SQL querying
-* Aggregations
-* Joins
-* Analytical views and queries
-* Preparing data for Business Intelligence
-
-## Power BI
-
-Power BI is used as the visualisation and Business Intelligence layer.
-
-The dashboard layer is designed to communicate analytical results rather than perform the core data-processing work.
-
-Potential dashboard areas include:
-
-* Labour market overview
-* Job demand
-* Skill demand
-* Salary analysis
-* Experience analysis
-* Geographic analysis
-* Remote work
-* Company hiring activity
-
----
-
-# Project Structure
-
-```text
-WORKEANLY/
-│
-├── data/
-│   ├── raw/
-│   │   ├── fact_job_postings.csv
-│   │   ├── dim_company.csv
-│   │   ├── dim_country.csv
-│   │   ├── dim_platform.csv
-│   │   ├── dim_skill.csv
-│   │   └── bridge_job_skills.csv
-│   │
-│   └── processed/
-│
-├── notebooks/
-│   └── 01_data_exploration.ipynb
-│
-├── src/
-│   └── workeanly/
-│       ├── analysis/
-│       │   ├── __init__.py
-│       │   ├── jobs.py
-│       │   └── skills.py
-│       │
-│       ├── cleaning/
-│       │   └── __init__.py
-│       │
-│       ├── database/
-│       │   ├── __init__.py
-│       │   └── connection.py
-│       │
-│       ├── ingestion/
-│       │   ├── __init__.py
-│       │   └── loader.py
-│       │
-│       └── validation/
-│           ├── __init__.py
-│           └── data_quality.py
-│
-├── script.py
-├── README.md
-└── LICENSE
-```
-
----
-
-# Data Ingestion
-
-The ingestion layer is responsible only for loading the raw datasets.
-
-The main loader is:
-
-```text
-src/workeanly/ingestion/loader.py
-```
-
-It reads the CSV files from:
+### Source files
 
 ```text
 data/raw/
+├── fact_job_postings.csv
+├── bridge_job_skills.csv
+├── dim_company.csv
+├── dim_country.csv
+├── dim_platform.csv
+└── dim_skill.csv
 ```
 
-and returns them as a dictionary of Polars DataFrames.
+`job_skills` is not a source CSV. It is an analytical DataFrame created when needed by joining `fact_job_postings` with `bridge_job_skills` on `job_id`.
 
-Conceptually:
-
-```python
-tables = load_raw_data()
-```
-
-The resulting structure is:
+## Data model
 
 ```text
-tables
-│
-├── fact_job_postings
-├── dim_company
-├── dim_country
-├── dim_platform
-├── dim_skill
-└── bridge_job_skills
+dim_company                 dim_country                 dim_platform
+    │                            │                            │
+    └────────────────────────────┴───────────────┬────────────┘
+                                                   ▼
+                                         fact_job_postings
+                                                   │
+                                                   ▼
+                                         bridge_job_skills
+                                                   │
+                                                   ▼
+                                               dim_skill
 ```
 
-This separation keeps file loading independent from validation and analysis.
+### Fact table: `fact_job_postings`
 
----
-
-# Data Quality
-
-Before performing analytical calculations, WORKEANLY validates the structure and relationships of the data.
-
-The validation layer checks:
-
-### Missing values
-
-Identify columns containing null values.
+The fact table represents the central business event: a job posting. Its expected fields are:
 
 ```text
-check_nulls()
-```
-
-### Duplicate records
-
-Check whether rows are duplicated.
-
-```text
-check_duplicates()
-```
-
-### Unique values
-
-Evaluate candidate keys and reference columns.
-
-```text
-check_unique_column()
-```
-
-### Duplicate job-skill relationships
-
-Validate that the same job-skill pair does not appear multiple times.
-
-```text
-(job_id, skill)
-```
-
-### Orphan skills
-
-Verify that every skill referenced by `bridge_job_skills` exists in `dim_skill`.
-
-### Orphan jobs
-
-Verify that every `job_id` referenced by `bridge_job_skills` exists in `fact_job_postings`.
-
-These checks help ensure that analytical results are based on structurally consistent data.
-
----
-
-# Exploratory Data Analysis
-
-The exploratory analysis layer is used to understand the dataset before building the final analytical model.
-
-Examples of analyses include:
-
-## Job demand
-
-Determine the number of postings by job title.
-
-```text
+job_id
 job_title
-job_count
-```
-
-This makes it possible to identify roles with the highest representation in the dataset.
-
-## Salary analysis
-
-Calculate metrics such as:
-
-* Average salary
-* Median salary
-* Minimum salary
-* Maximum salary
-* Salary by role
-* Salary by experience level
-
-For postings containing minimum and maximum salary values, an average salary estimate can be calculated as:
-
-```text
-average salary = (salary_min + salary_max) / 2
-```
-
-## Applicant analysis
-
-Analyse:
-
-* Average estimated applicants
-* Applicants by job title
-* Applicants relative to job-posting volume
-
-## Skill demand
-
-Measure how many different job postings require each skill.
-
-A job may contain the same skill only once in the logical relationship:
-
-```text
-job_id + skill
-```
-
-Therefore, skill demand is analysed using the number of distinct jobs requiring each skill.
-
-## Skill and experience analysis
-
-Analyse relationships such as:
-
-```text
-Skill → Experience Level
-```
-
-This can help identify which skills are more frequently associated with junior, mid-level or senior positions.
-
-## Geographic analysis
-
-Analyse job demand across:
-
-* Countries
-* Regions
-* Job titles
-* Skills
-* Remote options
-
----
-
-# Business Questions
-
-The project is designed around business-oriented questions rather than purely technical metrics.
-
-### Hiring demand
-
-* What are the most frequently advertised job roles?
-* Which roles represent the largest share of job postings?
-* Which companies advertise the highest number of positions?
-
-### Skills
-
-* Which skills are most demanded?
-* Which skills appear together frequently?
-* Which skills are associated with specific job roles?
-* Which skills are more common at higher experience levels?
-
-### Compensation
-
-* Which roles have the highest salary ranges?
-* How does compensation vary by experience level?
-* Is higher experience associated with higher salary?
-* Which skills are associated with higher-paying roles?
-
-### Geography
-
-* Which countries have the highest job-posting volume?
-* How does demand vary by region?
-* Which skills are most demanded in different locations?
-
-### Work model
-
-* How common are remote opportunities?
-* Which roles have the highest proportion of remote postings?
-* Does remote availability vary by country or experience level?
-
----
-
-# Example Analytical Questions
-
-The project can produce outputs such as:
-
-```text
-Top job titles by posting volume
-
-Top skills by number of unique job postings
-
-Average salary by experience level
-
-Median salary by job title
-
-Job demand by country
-
-Remote vs non-remote opportunities
-
-Skills by experience level
-
-Companies with the highest hiring volume
-```
-
-The objective is not simply to calculate these metrics, but to transform them into information that can support interpretation and decision-making.
-
----
-
-# Data Quality Principles
-
-WORKEANLY follows several principles throughout the analytical workflow:
-
-### Validate before analysing
-
-Data is checked before being used to generate business conclusions.
-
-### Separate responsibilities
-
-Loading, validation, cleaning, analysis and database operations are kept in separate modules.
-
-### Preserve traceability
-
-Raw data remains separated from processed data.
-
-### Avoid unnecessary transformations
-
-Transformations are introduced when they have an analytical or modelling purpose.
-
-### Use reproducible analysis
-
-Important analytical operations are implemented as reusable Python functions rather than existing only as notebook cells.
-
-### Validate relationships
-
-Foreign-key-like relationships are checked before being represented in the relational database.
-
----
-
-# SQL Server Data Model
-
-The planned relational model is:
-
-```text
-dim_company
------------
-company (PK)
-
-
-dim_country
------------
-country (PK)
+company
+country
 region
-
-
-dim_platform
-------------
-platform (PK)
-
-
-dim_skill
----------
-skill (PK)
-
-
-fact_job_postings
------------------
-job_id (PK)
-job_title
-company (FK)
-country (FK)
-region
-platform (FK)
+platform
 experience_level
 employment_type
 salary_min_usd
@@ -634,295 +93,246 @@ salary_max_usd
 remote_option
 posting_date
 applicants_estimate
-
-
-bridge_job_skills
------------------
-job_id (FK)
-skill (FK)
-
-PRIMARY KEY (job_id, skill)
 ```
 
-The exact implementation may evolve as the data model is validated and implemented in SQL Server.
+`job_id` is expected to become the primary key only after uniqueness and null checks have passed.
 
----
+### Dimension tables
 
-# Power BI
+| Table | Candidate key | Attributes |
+| --- | --- | --- |
+| `dim_company` | `company` | Company name |
+| `dim_country` | `country` | Country, region |
+| `dim_platform` | `platform` | Platform name |
+| `dim_skill` | `skill` | Skill name |
 
-Power BI will serve as the Business Intelligence layer.
+### Bridge table: `bridge_job_skills`
 
-The dashboard will focus on presenting the most relevant labour-market indicators in a clear and decision-oriented format.
+One job can require several skills, and one skill can occur in several jobs. This is a many-to-many relationship, represented by the bridge table.
 
-Potential dashboard sections:
+```text
+job_id + skill
+```
 
-### Labour Market Overview
+The composite pair `(job_id, skill)` must be unique. Once validated, it becomes the bridge table primary key. `job_id` and `skill` then become foreign keys to `fact_job_postings` and `dim_skill` respectively.
 
-* Total job postings
-* Number of companies
-* Number of skills
-* Average salary
-* Average estimated applicants
-* Remote-job share
+## Architecture and data flow
 
-### Job Demand
+```text
+Raw CSV files
+    ↓
+Python + Polars ingestion
+    ↓
+Data-quality validation
+    ↓
+Cleaning and transformation
+    ↓
+Reusable analytical DataFrames
+    ↓
+Microsoft SQL Server
+    ↓
+Analytical SQL and views
+    ↓
+Power BI dashboard
+```
 
-* Top job titles
-* Job postings by experience level
-* Job postings by employment type
+Each layer has one responsibility:
 
-### Skills Intelligence
+| Layer | Responsibility |
+| --- | --- |
+| `data/raw` | Immutable source CSV files. |
+| `ingestion` | Reads CSV files into Polars DataFrames. |
+| `validation` | Tests quality, uniqueness and referential integrity. |
+| `cleaning` | Standardises valid values and creates analysis-ready fields. |
+| `analysis` | Provides reusable business calculations. |
+| SQL Server | Stores validated relational data and serves analytical queries. |
+| Power BI | Delivers interactive visual analysis; it does not replace the transformation layer. |
 
-* Most demanded skills
-* Skills by job title
-* Skills by experience level
+## Data-quality strategy
 
-### Compensation
+No primary key or foreign key is assumed before validation. The pipeline must verify the following controls before loading data into SQL Server:
 
-* Salary by role
-* Salary by experience
-* Salary distribution
+| Control | Purpose | Expected result |
+| --- | --- | --- |
+| Null check | Identifies missing values by column. | Reviewed and documented. |
+| Duplicate-row check | Detects repeated full records. | Zero unexpected duplicates. |
+| Unique-key check | Validates primary-key candidates. | One distinct, non-null value per row. |
+| Bridge duplicate check | Detects repeated `(job_id, skill)` relationships. | Zero duplicate pairs. |
+| Orphan-skill check | Finds bridge skills missing from `dim_skill`. | Zero rows. |
+| Orphan-job check | Finds bridge jobs missing from `fact_job_postings`. | Zero rows. |
 
-### Geographic Intelligence
+An orphan is a record whose reference does not exist in its parent table. For example, a skill in `bridge_job_skills` is orphaned if that skill is absent from `dim_skill`. In Polars, an anti join returns exactly these unmatched rows. Zero rows means the relationship is valid for a SQL Server foreign key.
 
-* Job postings by country
-* Job postings by region
-* Skills by geography
-* Remote opportunities by location
+## Planned analytics
 
-The final dashboard will be based on validated analytical data rather than raw CSV files.
+### Job demand
 
----
+- Posting volume by job title
+- Hiring volume by company
+- Posting volume by country and region
+- Employment-type distribution
+- Remote versus non-remote opportunities
+- Job-posting volume by experience level
 
-# Installation
+### Skills intelligence
 
-## Requirements
+- Most demanded skills, measured by distinct `job_id`
+- Skills by job title
+- Skills by experience level
+- Skills associated with higher salary ranges
+- Potential skills gaps based on demand patterns
 
-The project requires:
+### Compensation and experience
 
-* Python 3.x
-* Polars
-* Microsoft SQL Server
-* Power BI Desktop for the visualisation layer
+- Average, minimum and maximum salary by role
+- Salary distribution by experience level
+- Relationship between experience and salary
+- Salary comparison by geography and employment type
 
-Create and activate a virtual environment:
+### Market trends
+
+- Job-posting volume over time, when valid dates are available
+- Growth or decline by role, skill, country and platform
+- Remote-work patterns over time
+
+## Technology stack
+
+| Technology | Role in WORKEANLY |
+| --- | --- |
+| Python | Main language for data processing and automation. |
+| Polars | Fast, expressive DataFrame operations for ingestion, validation, joins and aggregation. |
+| Jupyter Notebook | Exploration, learning, experiments and visual investigation. |
+| Microsoft SQL Server | Relational storage, integrity constraints, joins, aggregations and views. |
+| Power BI | KPI reporting, interactive filtering and dashboard presentation. |
+
+The stack intentionally avoids unnecessary infrastructure. The project prioritises strong data fundamentals over operational complexity.
+
+## Local setup and execution
+
+### 1. Create and activate a virtual environment
 
 ```bash
 python -m venv .venv
-```
-
-Activate it on Linux/macOS:
-
-```bash
 source .venv/bin/activate
 ```
 
-Install the Python dependency:
+On Windows PowerShell:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+### 2. Install dependencies
 
 ```bash
-pip install polars
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
----
+### 3. Run the local pipeline
 
-# Running the Project
-
-From the project root:
+Run this command from the repository root:
 
 ```bash
-cd WORKEANLY
+PYTHONPATH=src python script.py
 ```
 
-Run the main script:
+The command loads the raw CSV files, runs validation checks, prepares cleaned tables, creates the `job_skills` analytical DataFrame and prints selected business outputs.
+
+### 4. Run automated tests
 
 ```bash
-python script.py
+PYTHONPATH=src python -m unittest discover -s tests -v
 ```
 
-The ingestion layer can be used through:
+### 5. Load validated data into SQL Server
 
-```python
-from src.workeanly.ingestion.loader import load_raw_data
+Execute the schema script in the target database, configure credentials as local environment variables, then run the optional load command:
 
-tables = load_raw_data()
+```bash
+PYTHONPATH=src python script.py --load-sql
 ```
 
-The returned dictionary contains the project's raw DataFrames.
+The SQL loader refuses to insert data into non-empty destination tables. This avoids accidental duplicate loads and preserves the integrity of the database model.
 
----
-
-# Development Approach
-
-The project is being developed incrementally.
-
-The current development sequence is:
+## Project structure
 
 ```text
-1. Data ingestion
-        ↓
-2. Data profiling
-        ↓
-3. Data quality validation
-        ↓
-4. Data cleaning
-        ↓
-5. Exploratory analysis
-        ↓
-6. Analytical functions
-        ↓
-7. SQL Server modelling
-        ↓
-8. SQL analytics
-        ↓
-9. Power BI dashboard
-        ↓
-10. Final documentation and insights
+WORKEANLY/
+├── data/
+│   ├── raw/
+│   └── processed/
+├── notebooks/
+│   └── 01_data_exploration.ipynb
+├── sql/
+│   ├── 01_schema.sql
+│   ├── 02_load.sql
+│   └── 03_analytics_views.sql
+├── src/
+│   └── workeanly/
+│       ├── analysis/
+│       │   ├── jobs.py
+│       │   └── skills.py
+│       ├── cleaning/
+│       │   └── transformations.py
+│       ├── database/
+│       │   └── connection.py
+│       ├── ingestion/
+│       │   └── loader.py
+│       └── validation/
+│           └── data_quality.py
+├── README.md
+├── SECURITY.md
+├── pyproject.toml
+├── requirements.txt
+├── tests/
+│   └── test_pipeline.py
+└── .github/
+    └── workflows/ci.yml
 ```
 
-This approach makes it possible to validate each stage before building the next one.
+The repository also contains `.github/workflows/ci.yml`, which compiles the code and runs the pipeline tests on every push and pull request to `main`.
 
----
+## Implementation roadmap
 
-# Project Status
+1. Load each raw CSV with Polars.
+2. Profile schema, row counts, nulls, duplicates and value distributions.
+3. Validate candidate keys and bridge-table integrity.
+4. Apply documented cleaning transformations without modifying source files.
+5. Build reusable job and skill analysis functions.
+6. Create and populate the validated SQL Server model.
+7. Develop analytical SQL queries and views.
+8. Connect Power BI to SQL Server.
+9. Design a minimal, accessible dashboard with clear KPIs and filters.
+10. Document insights, assumptions, limitations and recommendations.
 
-### Completed / In Progress
+## Power BI dashboard plan
 
-* [x] Raw dataset acquisition
-* [x] Dataset structure inspection
-* [x] DataFrame profiling
-* [x] Schema inspection
-* [x] Null-value inspection
-* [x] Duplicate checks
-* [x] Initial exploratory analysis
-* [x] Initial relational model design
-* [x] Python project structure
-* [x] Data ingestion module
-* [x] Initial data-quality module
-* [ ] Cleaning pipeline
-* [ ] Reusable job analysis module
-* [ ] Reusable skills analysis module
-* [ ] SQL Server implementation
-* [ ] Analytical SQL layer
-* [ ] Power BI dashboard
-* [ ] Final business insights
-* [ ] Final project documentation
+The final dashboard will use a restrained, enterprise-style visual language: white and neutral grey surfaces, dark text and one discrete accent colour. It will prioritise readability, comparison and meaningful interaction.
 
----
+Proposed pages:
 
-# Limitations
+| Page | Main content |
+| --- | --- |
+| Market overview | Total postings, top roles, top companies, top countries and remote share. |
+| Skills demand | Most requested skills, skills by role and skills by experience level. |
+| Compensation | Salary distributions and salary by role, level and location. |
+| Geography and work model | Country and region analysis, employment type and remote patterns. |
 
-Job-posting data provides useful signals about labour-market demand, but it does not represent the entire labour market.
+Recommended filters include country, region, job title, company, platform, experience level, employment type and remote option.
 
-Potential limitations include:
+## How this project can be explained in an interview
 
-* Not every job vacancy is published online.
-* Different platforms may represent different segments of the labour market.
-* Salary information may be incomplete or estimated.
-* Applicant counts may be estimates rather than exact values.
-* Job-posting distributions may reflect the composition of the source dataset rather than the entire global labour market.
-* Historical or temporal analysis depends on the quality and consistency of the available posting dates.
+WORKEANLY demonstrates an analytical workflow rather than a single dashboard. The explanation should follow the data flow:
 
-Therefore, WORKEANLY treats the dataset as a source of **labour-market signals**, not as a complete representation of global employment.
+1. Raw CSV files are loaded into Polars DataFrames.
+2. Quality checks identify nulls, duplicates, invalid key candidates and broken relationships.
+3. Cleaning creates consistent, analysis-ready fields while preserving raw source data.
+4. Jobs and skills are connected through a bridge table because their relationship is many-to-many.
+5. Validated data is loaded into SQL Server, where PK/FK constraints enforce relational integrity.
+6. SQL views provide stable datasets for Power BI.
+7. Power BI focuses on communicating KPIs and interactive business insights.
 
----
+## License
 
-# What This Project Demonstrates
-
-WORKEANLY demonstrates practical skills across the data-analysis lifecycle:
-
-### Data
-
-* Data ingestion
-* Data profiling
-* Data cleaning
-* Data validation
-* Data transformation
-* Exploratory Data Analysis
-
-### Programming
-
-* Python
-* Polars
-* Reusable functions
-* Modular project structure
-
-### Databases
-
-* Relational modelling
-* Fact and dimension tables
-* Many-to-many relationships
-* Primary and foreign keys
-* SQL Server
-* Analytical SQL
-
-### Business Intelligence
-
-* KPI design
-* Data visualisation
-* Dashboard development
-* Business-oriented analysis
-* Insight communication
-
-### Analytical Thinking
-
-* Translating business questions into analytical queries
-* Validating data before drawing conclusions
-* Identifying relationships between roles, skills, salaries and experience
-* Communicating data-driven findings
-
----
-
-# Future Improvements
-
-Future iterations may include:
-
-* More robust date handling
-* Additional data-quality rules
-* Advanced salary analysis
-* Skill co-occurrence analysis
-* Job-title normalisation
-* Additional geographic analysis
-* SQL Server views for BI consumption
-* Power BI semantic modelling
-* Automated data-quality reporting
-* Additional labour-market indicators
-
-New technologies will only be introduced when they provide a clear analytical or engineering benefit.
-
----
-
-# Repository Philosophy
-
-WORKEANLY is designed around three principles:
-
-**Reliable data**
-
-> Analytical results are only useful when the underlying data has been properly validated.
-
-**Clear architecture**
-
-> Each stage of the pipeline has a defined responsibility.
-
-**Business-oriented analysis**
-
-> The purpose of the project is not only to process data, but to turn data into information that can answer meaningful labour-market questions.
-
----
-
-# Author
-
-**Ana Juliana Avelino da Costa Sobrinho**
-
-Software Engineer | Data Analytics
-
-Luanda, Angola
-
----
-
-# License
-
-This project is licensed under the **MIT License**.
-
-The MIT License permits others to use, modify, distribute and reuse the software, subject to the conditions defined in the license.
-
-See the `LICENSE` file for the complete license text.
+This project is intended for educational and portfolio purposes. Dataset usage remains subject to the source dataset licence.
