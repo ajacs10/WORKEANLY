@@ -9,7 +9,7 @@ description = "Labour market intelligence and skills analytics project"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "polars>=1.44,<2.0",
+    "polars>=1.44,<3.0",
     "pyodbc>=5.2,<6.0",
 ]
 
